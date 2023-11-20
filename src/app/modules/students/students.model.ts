@@ -1,6 +1,7 @@
+import bycript from 'bcrypt';
 import { Schema, model } from 'mongoose';
-
 import isEmail from 'validator/lib/isEmail';
+import config from '../../config';
 import { Gaurdian, LocalGuardian, Student } from './students.interface';
 
 const GaurdianSchema = new Schema<Gaurdian>({
@@ -46,6 +47,10 @@ const StudentSchema = new Schema<Student>({
     type: String,
     required: [true, 'Student ID is required'],
     unique: true,
+  },
+  passwoard: {
+    type: String,
+    required: true,
   },
   name: {
     firstName: {
@@ -95,6 +100,15 @@ const StudentSchema = new Schema<Student>({
     type: LocalGuardianSchema,
     required: [true, 'Local guardian information is required'],
   },
+});
+
+// monggose pre middleware/hook
+StudentSchema.pre('save', async function () {
+  const user = this;
+  user.passwoard = await bycript.hash(
+    user.passwoard,
+    Number(config.bycript_salt_rounds),
+  );
 });
 
 const StudentModel = model<Student>('Student', StudentSchema);
